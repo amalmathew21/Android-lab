@@ -1,0 +1,129 @@
+AndroidManifest.xml
+
+
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.example.excontentprovider">
+
+
+    <uses-permission android:name="android.permission.READ_CONTACTS"/>
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.ExContentProvider"
+        tools:targetApi="31">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>
+
+
+
+
+______________________________________________________________________________________________________________
+
+activity_main.xml
+
+
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+
+    <ListView
+        android:id="@+id/list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+______________________________________________________________________________________________________________
+
+
+
+
+MainActivity.java
+
+package com.example.excontentprovider;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
+import android.Manifest;
+import android.content.ContentResolver;
+import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.net.Uri;
+import android.os.Bundle;
+import android.provider.ContactsContract;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+
+import java.util.ArrayList;
+
+public class MainActivity extends AppCompatActivity {
+    ListView listView;
+    ArrayList<String> listdata;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        listView = findViewById(R.id.list);
+        listdata = new ArrayList<String>();
+        fetchData();
+    }
+
+    private void fetchData() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_CONTACTS},0);
+        }
+        ContentResolver contentResolver = getContentResolver();
+        Uri uri = ContactsContract.CommonDataKinds.Phone.CONTENT_URI;
+
+        String[] projection = null;
+        String selection = null;
+        String[] selectionargs = null;
+        String order = null;
+
+        Cursor cursor = contentResolver.query(uri, projection, selection, selectionargs, order);
+        if (cursor.getCount() > 0) {
+            while (cursor.moveToNext()) {
+                String name = cursor.getString(cursor.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
+                String number = cursor.getString(cursor.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                String fullContact = name + number;
+                listdata.add(fullContact);
+
+            }
+        }
+        ArrayAdapter<String> arrayAdapter=new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1,listdata);
+        listView.setAdapter(arrayAdapter);
+    }
+    
+
+}
+
+______________________________________________________________________________________________________________
